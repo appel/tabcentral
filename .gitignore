@@ -4,3 +4,4 @@ web-ext-artifacts/
 .vscode/
 Thumbs.db
 .DS_Store
+.amo-upload-uuid

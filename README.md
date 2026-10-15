@@ -1,6 +1,6 @@
 # TabCentral
 
-A Firefox add-on for managing your open tabs across windows, in the style of Firefox View's Open tabs page.
+A Firefox add-on for managing your open tabs across windows, in the style of Firefox View's Open tabs page, but with a little more pizzazz.
 
 ## Features
 
@@ -30,7 +30,14 @@ TabCentral collects no data. Everything stays in your browser.
 
 ## Install
 
-Not on addons.mozilla.org yet. To try it from source, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and pick `manifest.json`. Requires Firefox 139 or later.
+Not on addons.mozilla.org yet, but aiming to! Until then:
+
+1. Download the `.xpi` file from the newest [release](https://github.com/appel/tabcentral/releases). These are pre-releases, signed by Mozilla.
+2. Open it in Firefox: drag it onto a Firefox window, or go to `about:addons`, click the gear icon and choose **Install Add-on From File**.
+
+To get a newer version, install the newer `.xpi` the same way. Your settings stay. Requires Firefox 139 or later.
+
+To try it from source instead, open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on** and pick `manifest.json`. Temporary add-ons are removed when Firefox closes.
 
 ## Development
 

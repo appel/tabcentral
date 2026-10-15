@@ -2,6 +2,10 @@
 
 Firefox add-on (Manifest V3). Plain JavaScript, HTML and CSS: no bundler, no build step, no npm dependencies. Scripts are loaded with `<script>` tags.
 
+## Before starting
+
+- Run `git status`. The user also edits files (READMEs especially) locally: build on uncommitted changes, never overwrite or revert them.
+
 ## Before handing work over
 
 - Run `npx web-ext@8 lint` in this folder. It must report 0 errors and 0 warnings.
