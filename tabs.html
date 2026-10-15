@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TabCentral</title>
+	<link rel="icon" href="icons/icon.svg">
+	<link rel="stylesheet" href="nova.css">
+	<link rel="stylesheet" href="tabs.css">
+</head>
+<body>
+	<main>
+		<h1><span class="brand">TabCentral</span><span class="crumb-separator" aria-hidden="true">›</span>Open tabs <span id="tab-count" class="tab-count"></span></h1>
+
+		<div class="toolbar">
+			<div class="search">
+				<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6.75" cy="6.75" r="4.75"/><path d="M10.25 10.25L14 14"/></svg>
+				<input id="search" type="search" placeholder="Search open tabs" autocomplete="off" spellcheck="false" aria-label="Search open tabs">
+				<button id="search-clear" class="icon-button search-clear" type="button" title="Clear search" aria-label="Clear search" hidden></button>
+			</div>
+			<label class="radio"><input type="radio" name="sort" value="recent"> Sort by recent activity</label>
+			<label class="radio"><input type="radio" name="sort" value="order"> Sort by tab order</label>
+			<div class="view-controls">
+				<button id="toggle-expand" class="icon-button" type="button" aria-pressed="false"></button>
+				<button id="card-size" class="icon-button" type="button" aria-label="Card width"></button>
+				<button id="page-menu" class="icon-button" type="button" title="More options" aria-label="More options" aria-haspopup="menu"></button>
+			</div>
+		</div>
+
+		<div id="windows" class="windows"></div>
+		<p id="no-results" class="no-results" hidden>No matching tabs</p>
+
+		<section id="stored-section" class="stored-section" hidden>
+			<h2 id="stored-title" class="section-title">
+				<button id="stored-toggle" class="icon-button twisty" type="button" aria-controls="stored"></button>
+				<span>Stored tabs</span>
+				<span id="stored-count" class="section-count"></span>
+			</h2>
+			<div id="stored" class="windows"></div>
+		</section>
+	</main>
+
+	<dialog id="group-dialog">
+		<form method="dialog">
+			<h3 id="group-dialog-heading">Create tab group</h3>
+			<label class="field">Name
+				<input id="group-name" type="text" maxlength="100" autocomplete="off">
+			</label>
+			<fieldset id="group-colors" class="color-picker">
+				<legend>Color</legend>
+			</fieldset>
+			<div class="dialog-buttons">
+				<button id="group-ok" value="ok" class="primary">Create</button>
+				<button value="cancel">Cancel</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="confirm-dialog">
+		<form method="dialog">
+			<p id="confirm-message"></p>
+			<div class="dialog-buttons">
+				<button id="confirm-ok" value="ok" class="primary">OK</button>
+				<button value="cancel">Cancel</button>
+			</div>
+		</form>
+	</dialog>
+
+	<dialog id="prompt-dialog">
+		<form method="dialog">
+			<h3 id="prompt-heading"></h3>
+			<label class="field"><span id="prompt-label"></span>
+				<input id="prompt-input" type="text" maxlength="200" autocomplete="off">
+			</label>
+			<div class="dialog-buttons">
+				<button id="prompt-ok" value="ok" class="primary">OK</button>
+				<button value="cancel">Cancel</button>
+			</div>
+		</form>
+	</dialog>
+
+	<div id="selection-info" class="selection-info" role="status" hidden>
+		<span id="selection-count"></span>
+		<button id="selection-clear" class="link-button" type="button">Clear selection</button>
+	</div>
+
+	<div id="toast" class="toast" role="status" hidden></div>
+	<div id="announcer" class="visually-hidden" aria-live="polite"></div>
+	<dialog id="backup-dialog">
+		<form method="dialog">
+			<h3>Restore from backup</h3>
+			<p id="backup-summary"></p>
+			<p class="dialog-hint">Each window opens as a new window. Tabs load when you first select them.</p>
+			<div id="backup-windows" class="check-list"></div>
+			<label id="backup-stored-row" class="check-row"><input id="backup-stored" type="checkbox"> <span id="backup-stored-label"></span></label>
+			<div class="dialog-buttons">
+				<button value="ok" class="primary">Restore</button>
+				<button value="cancel">Cancel</button>
+			</div>
+		</form>
+	</dialog>
+
+	<input id="backup-file" type="file" accept=".json,application/json" hidden>
+
+	<div id="busy" class="busy-overlay" hidden>
+		<div class="spinner" role="progressbar" aria-label="Working…"></div>
+		<div id="busy-text" class="busy-text" aria-live="polite"></div>
+	</div>
+
+	<script src="psl.js"></script>
+	<script src="history.js"></script>
+	<script src="backup.js"></script>
+	<script src="tabs.js"></script>
+</body>
+</html>

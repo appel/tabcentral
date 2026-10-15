@@ -1,0 +1,42 @@
+{
+	"manifest_version": 3,
+	"name": "TabCentral",
+	"version": "0.9.0",
+	"description": "Manage open tabs across windows: search, sort, multi-select, drag between windows, tab groups and stored tabs.",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "tabcentral@appel.github.io",
+			"strict_min_version": "139.0",
+			"data_collection_permissions": {
+				"required": ["none"]
+			}
+		}
+	},
+	"permissions": ["tabs", "tabGroups", "bookmarks", "sessions", "storage", "clipboardWrite"],
+	"incognito": "not_allowed",
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"action": {
+		"default_title": "TabCentral",
+		"default_icon": "icons/icon.svg",
+		"theme_icons": [
+			{ "light": "icons/icon-light.svg", "dark": "icons/icon.svg", "size": 16 },
+			{ "light": "icons/icon-light.svg", "dark": "icons/icon.svg", "size": 32 }
+		]
+	},
+	"icons": {
+		"48": "icons/icon.svg",
+		"96": "icons/icon.svg"
+	},
+	"options_ui": {
+		"page": "options.html",
+		"open_in_tab": true
+	},
+	"commands": {
+		"_execute_action": {
+			"suggested_key": { "default": "Alt+Shift+T" },
+			"description": "Open TabCentral"
+		}
+	}
+}

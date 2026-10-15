@@ -1,0 +1,258 @@
+/* TabCentral settings page; same layout as TabShush's page (Firefox Settings style). */
+
+*
+{
+	box-sizing: border-box;
+}
+
+[hidden]
+{
+	display: none !important;
+}
+
+body
+{
+	display: flex;
+	min-height: 100vh;
+	margin: 0;
+	background: var(--nova-bg);
+	color: var(--nova-text);
+	font: var(--nova-font-size)/1.45 var(--nova-font);
+}
+
+:focus-visible
+{
+	outline: 2px solid var(--nova-accent);
+	outline-offset: 2px;
+}
+
+/* Sidebar: stays in view while the page scrolls. */
+.sidebar
+{
+	position: sticky;
+	top: 0;
+	align-self: flex-start;
+	flex: none;
+	width: 240px;
+	max-height: 100vh;
+	padding: 1rem 0.5rem;
+	overflow-y: auto;
+}
+
+.brand
+{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0.25rem 0.5rem 1.25rem;
+	font-size: 1.5rem;
+	font-weight: 600;
+}
+
+.nav-item
+{
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0.375rem 1rem;
+	border-radius: var(--nova-radius-pill);
+	color: inherit;
+	text-decoration: none;
+}
+
+.nav-item svg
+{
+	flex: none;
+}
+
+.nav-item:hover
+{
+	background: var(--nova-hover);
+}
+
+.nav-item[aria-current="page"]
+{
+	background: var(--nova-accent-strong);
+	color: var(--nova-on-accent);
+}
+
+main
+{
+	flex: 1;
+	min-width: 0;
+	max-width: 760px;
+	padding: 1.25rem 1.5rem 4rem;
+}
+
+.section-title
+{
+	margin: 1.25rem 0 1rem;
+	font-size: 1.3594rem;
+	font-weight: 600;
+}
+
+.section > .nova-card + .nova-card
+{
+	margin-top: 1rem;
+}
+
+.setting
+{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 0.5rem 0;
+}
+
+.setting label
+{
+	display: flex;
+	flex-direction: column;
+}
+
+.setting-hint,
+.card-text
+{
+	color: var(--nova-text-muted);
+	font-size: 0.8156rem;
+}
+
+.card-text
+{
+	margin: 0 0 0.5rem;
+}
+
+#stored-folder
+{
+	width: 220px;
+}
+
+.buttons
+{
+	display: flex;
+	gap: 8px;
+	margin-top: 0.5rem;
+}
+
+/* Shortcuts */
+
+.shortcut-controls
+{
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.shortcut-field
+{
+	min-width: 150px;
+	font-variant-numeric: tabular-nums;
+}
+
+.shortcut-field.empty
+{
+	color: var(--nova-text-muted);
+	font-weight: 400;
+}
+
+.shortcut-field.recording
+{
+	border-color: var(--nova-accent);
+	outline: 2px solid var(--nova-accent);
+	outline-offset: -1px;
+}
+
+.shortcut-row + .shortcut-row
+{
+	border-top: 1px solid var(--nova-border);
+}
+
+.key-list
+{
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 6px 16px;
+	margin: 0;
+}
+
+.key-list dt
+{
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.key-list dd
+{
+	margin: 0;
+	color: var(--nova-text-muted);
+}
+
+/* About */
+
+.about-title
+{
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 1.2188rem;
+}
+
+.about-version
+{
+	color: var(--nova-text-muted);
+	font-size: 0.7022rem;
+	font-weight: 400;
+}
+
+.about p
+{
+	margin: 0 0 0.75rem;
+}
+
+/* Toast */
+
+.toast
+{
+	position: fixed;
+	inset-inline: 0;
+	bottom: 24px;
+	width: fit-content;
+	max-width: calc(100vw - 32px);
+	margin: 0 auto;
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--nova-border);
+	border-radius: var(--nova-radius-pill);
+	background: var(--nova-panel);
+	box-shadow: var(--nova-shadow);
+}
+
+.toast.error
+{
+	color: var(--nova-danger);
+}
+
+@media (max-width: 720px)
+{
+	body
+	{
+		flex-direction: column;
+	}
+
+	.sidebar
+	{
+		position: static;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		width: auto;
+		padding-bottom: 0;
+	}
+
+	.brand
+	{
+		margin: 0 0.75rem 0 0.5rem;
+		font-size: 1.125rem;
+	}
+}

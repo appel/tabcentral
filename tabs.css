@@ -1,0 +1,1094 @@
+/* TabCentral's colour names, mapped onto the shared Nova tokens (nova.css handles light and dark). */
+:root
+{
+	--accent: var(--nova-accent);
+	--accent-strong: var(--nova-accent-strong);
+	--accent-text: var(--nova-on-accent);
+	--bg: var(--nova-bg);
+	--card-bg: var(--nova-surface);
+	--card-border: var(--nova-border);
+	--text: var(--nova-text);
+	--text-muted: var(--nova-text-muted);
+	--border: var(--nova-border-strong);
+	--hover: var(--nova-hover);
+	--active: var(--nova-active);
+	--link: var(--nova-link);
+	--selected: var(--nova-selected);
+	--selected-hover: var(--nova-selected-hover);
+	--menu-bg: var(--nova-panel);
+	--menu-border: var(--nova-border);
+	--menu-hover: var(--nova-hover);
+	--button-bg: var(--nova-hover);
+
+	--group-grey: #8f8f9d;
+	--group-blue: #3c8cff;
+	--group-purple: #9d62fc;
+	--group-cyan: #0fb7c6;
+	--group-green: #3fbc66;
+	--group-yellow: #ffbf00;
+	--group-orange: #ff8a50;
+	--group-red: #ff5560;
+	--group-pink: #ff6bba;
+}
+
+*
+{
+	box-sizing: border-box;
+}
+
+/* Reserve the scrollbar space so the layout doesn't shift when the page starts or stops scrolling. */
+html
+{
+	scrollbar-gutter: stable;
+}
+
+body
+{
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--nova-font);
+	font-size: var(--nova-font-size);
+}
+
+main
+{
+	padding: 0.5rem 1rem 3rem;
+}
+
+h1
+{
+	font-size: 1.3594rem;
+	font-weight: 600;
+	margin: 1rem 0 1.75rem;
+}
+
+h1 .brand
+{
+	color: var(--text-muted);
+	font-weight: 400;
+}
+
+h1 .crumb-separator
+{
+	margin: 0 0.5438rem;
+	color: var(--text-muted);
+	font-weight: 400;
+}
+
+h1 .tab-count
+{
+	color: var(--text-muted);
+	font-weight: 400;
+}
+
+button
+{
+	font: inherit;
+	color: inherit;
+}
+
+[hidden]
+{
+	display: none !important;
+}
+
+:focus-visible
+{
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+/* Toolbar */
+
+.toolbar
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 24px;
+	margin-bottom: 1.5rem;
+}
+
+.search
+{
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.search svg
+{
+	position: absolute;
+	inset-inline-start: 11px;
+	color: var(--text-muted);
+	pointer-events: none;
+}
+
+.search input
+{
+	width: 216px;
+	height: 32px;
+	padding: 0 2rem 0 2.125rem;
+	border: 1px solid var(--border);
+	border-radius: var(--nova-radius-pill);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.8906rem;
+}
+
+/* Our own clear button replaces the native one, which not every platform shows. */
+.search input::-webkit-search-cancel-button
+{
+	display: none;
+}
+
+/* ".search" prefix: these must win over the generic .icon-button size and hover background in every state. */
+.search .search-clear,
+.search .search-clear:hover,
+.search .search-clear:active
+{
+	position: absolute;
+	inset-inline-end: 6px;
+	width: 20px;
+	height: 20px;
+	background: none;
+	color: var(--text);
+	opacity: 0.7;
+}
+
+.search .search-clear:hover
+{
+	opacity: 1;
+}
+
+.search-clear svg
+{
+	width: 12px;
+	height: 12px;
+}
+
+.search input:focus-visible
+{
+	outline-offset: -1px;
+	border-color: var(--accent);
+}
+
+.radio
+{
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	cursor: default;
+	user-select: none;
+}
+
+.radio input
+{
+	appearance: none;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	background: transparent;
+}
+
+.radio input:checked
+{
+	border-color: var(--accent-strong);
+	background: radial-gradient(circle, var(--bg) 0 3px, var(--accent-strong) 3.5px);
+}
+
+.radio input:focus-visible
+{
+	outline-offset: 2px;
+}
+
+/* Floating at the bottom, so selecting never shifts the layout. */
+.selection-info
+{
+	position: fixed;
+	z-index: 50;
+	inset-inline: 0;
+	bottom: 24px;
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	width: fit-content;
+	margin: 0 auto;
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--menu-border);
+	border-radius: var(--nova-radius-pill);
+	background: var(--menu-bg);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	animation: fade-in 120ms ease-out;
+}
+
+body:has(.selection-info:not([hidden])) .toast
+{
+	bottom: 80px;
+}
+
+.view-controls
+{
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-inline-start: auto;
+}
+
+.view-controls .icon-button[aria-pressed="true"]
+{
+	background: var(--active);
+}
+
+.link-button
+{
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--link);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* Window cards */
+
+/* The chosen number of columns, reduced on narrower screens so cards never get too small. */
+.windows
+{
+	--columns: 3;
+	display: grid;
+	grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+	gap: 16px;
+	align-items: start;
+}
+
+body[data-card-size="small"] .windows
+{
+	--columns: 4;
+}
+
+body[data-card-size="big"] .windows
+{
+	--columns: 2;
+}
+
+body[data-card-size="single"] .windows
+{
+	--columns: 1;
+}
+
+@media (max-width: 1099px)
+{
+	body[data-card-size="small"] .windows
+	{
+		--columns: 3;
+	}
+}
+
+@media (max-width: 819px)
+{
+	body[data-card-size="small"] .windows,
+	body[data-card-size="normal"] .windows
+	{
+		--columns: 2;
+	}
+}
+
+@media (max-width: 559px)
+{
+	body[data-card-size] .windows
+	{
+		--columns: 1;
+	}
+}
+
+.stored-section
+{
+	margin-top: 2.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--menu-border);
+}
+
+.section-title
+{
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 1.125rem;
+	font-weight: 600;
+	margin: 0 0 1.25rem;
+	cursor: default;
+	user-select: none;
+}
+
+.stored-section.collapsed .section-title
+{
+	margin-bottom: 0;
+}
+
+.stored-section.collapsed .twisty svg
+{
+	transform: rotate(180deg);
+}
+
+.section-count
+{
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	font-weight: 400;
+}
+
+.card
+{
+	background: var(--card-bg);
+	border-radius: var(--nova-radius-large);
+	box-shadow: none;
+	padding: 0.5rem 0.75rem 0.625rem;
+	border: 1px solid var(--card-border);
+}
+
+.card-header
+{
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	height: 40px;
+	cursor: default;
+	user-select: none;
+}
+
+.card-header h2
+{
+	min-width: 0;
+	margin: 0;
+	font-size: 1.0312rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.rename-input
+{
+	flex: 1;
+	min-width: 0;
+	height: 28px;
+	padding: 0 0.375rem;
+	border: 1px solid var(--accent);
+	border-radius: var(--nova-radius-medium);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 1.0312rem;
+	font-weight: 600;
+}
+
+.card-meta
+{
+	flex: none;
+	color: var(--text-muted);
+	font-size: 0.8156rem;
+}
+
+.card-header .card-more
+{
+	margin-inline-start: auto;
+}
+
+.card.selected-window
+{
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.card.collapsed .twisty svg,
+.group-header.collapsed .twisty svg
+{
+	transform: rotate(180deg);
+}
+
+.icon-button
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--nova-radius-pill);
+	background: transparent;
+	cursor: default;
+}
+
+.icon-button:hover
+{
+	background: var(--hover);
+}
+
+.icon-button:active
+{
+	background: var(--active);
+}
+
+.pinned-strip
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px;
+	padding: 0.125rem 0 0.25rem;
+}
+
+.pinned-tab
+{
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--nova-radius-medium);
+	background: transparent;
+}
+
+.pinned-tab:hover
+{
+	background: var(--hover);
+}
+
+.tab-list
+{
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.tab-row,
+.group-header
+{
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	height: 32px;
+	padding: 0 0 0 0.375rem;
+	border-radius: var(--nova-radius-medium);
+	user-select: none;
+	cursor: default;
+}
+
+.tab-row:hover
+{
+	background: var(--hover);
+}
+
+.tab-row .title
+{
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.tab-row .icon-button
+{
+	margin-inline-start: -0.5rem;
+}
+
+.tab-row .title + .icon-button
+{
+	margin-inline-start: 0;
+}
+
+.favicon
+{
+	flex: none;
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
+}
+
+.selected,
+.selected:hover
+{
+	background: var(--selected);
+}
+
+.selected:hover
+{
+	background: var(--selected-hover);
+}
+
+.drag-source
+{
+	opacity: 0.45;
+}
+
+.tab-row.discarded .title
+{
+	opacity: 0.75;
+}
+
+/* Tab groups */
+
+.group-header
+{
+	gap: 6px;
+	padding-inline-start: 0;
+	margin-top: 0.25rem;
+}
+
+.group-header.stored-group
+{
+	padding-inline-start: 0.625rem;
+}
+
+.group-header .twisty
+{
+	width: 24px;
+	height: 24px;
+}
+
+.group-label
+{
+	max-width: 60%;
+	padding: 0.0625rem 0.5rem;
+	border-radius: 4px;
+	background: var(--group-color);
+	color: #15141a;
+	font-size: 0.8156rem;
+	font-weight: 600;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.group-label.unnamed
+{
+	font-style: italic;
+	font-weight: 400;
+}
+
+.group-count
+{
+	flex: 1;
+	color: var(--text-muted);
+	font-size: 0.8156rem;
+}
+
+.tab-row.grouped::before
+{
+	content: "";
+	position: absolute;
+	inset-block: 4px;
+	inset-inline-start: 0;
+	width: 3px;
+	border-radius: 2px;
+	background: var(--group-color);
+}
+
+.tab-row.grouped
+{
+	padding-inline-start: 0.75rem;
+}
+
+.tab-row.indented
+{
+	margin-inline-start: 0.625rem;
+}
+
+/* Footer of a card */
+
+.show-more-row
+{
+	display: flex;
+	justify-content: center;
+	align-items: baseline;
+	gap: 6px;
+	margin: 0.5rem 0 0.125rem;
+}
+
+.show-more-count
+{
+	color: var(--text-muted);
+	font-size: 0.8719rem;
+}
+
+.empty-window
+{
+	margin: 0.25rem 0.375rem 0.5rem;
+	color: var(--text-muted);
+	font-size: 0.8719rem;
+}
+
+.no-results
+{
+	color: var(--text-muted);
+}
+
+/* "Tab closed. Undo" tip, pointing at the gap the closed tab left */
+
+.undo-tip
+{
+	position: absolute;
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0.375rem 0.75rem;
+	border: 1px solid var(--menu-border);
+	border-radius: var(--nova-radius-medium);
+	background: var(--menu-bg);
+	color: var(--text);
+	font-size: 0.8719rem;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	animation: fade-in 120ms ease-out;
+}
+
+/* Arrow pointing down at the gap: border colour behind, background in front. */
+.undo-tip::before,
+.undo-tip::after
+{
+	content: "";
+	position: absolute;
+	left: var(--arrow-x, 50%);
+	transform: translateX(-50%);
+	border: 7px solid transparent;
+	border-bottom: 0;
+}
+
+.undo-tip::before
+{
+	bottom: -7px;
+	border-top-color: var(--menu-border);
+}
+
+.undo-tip::after
+{
+	bottom: -6px;
+	border-width: 6px;
+	border-bottom: 0;
+	border-top-color: var(--menu-bg);
+}
+
+.undo-tip .link-button
+{
+	font-weight: 600;
+}
+
+/* The old row or card, shown again the moment Undo is clicked until the restored one replaces it. */
+.ghost
+{
+	pointer-events: none;
+}
+
+/* Brief highlight of a tab shown in context */
+
+.flash
+{
+	animation: flash 1.4s ease-out;
+}
+
+@keyframes flash
+{
+	from
+	{
+		background: var(--selected-hover);
+		box-shadow: inset 0 0 0 2px var(--accent);
+	}
+}
+
+/* Drag and drop */
+
+.drop-before
+{
+	box-shadow: 0 -2px 0 var(--accent);
+}
+
+.drop-after
+{
+	box-shadow: 0 2px 0 var(--accent);
+}
+
+.card.drop-target
+{
+	outline: 2px dashed var(--accent);
+	outline-offset: -2px;
+}
+
+.drop-zone
+{
+	display: none;
+	align-items: center;
+	justify-content: center;
+	min-height: 96px;
+	padding: 1rem;
+	border: 2px dashed var(--border);
+	border-radius: var(--nova-radius-large);
+	color: var(--text-muted);
+	text-align: center;
+}
+
+body.dragging .drop-zone
+{
+	display: flex;
+}
+
+.drop-zone.drop-target
+{
+	border-color: var(--accent);
+	color: var(--text);
+	background: var(--selected);
+}
+
+.drag-ghost
+{
+	position: fixed;
+	top: 0;
+	left: -1000px;
+	padding: 0.25rem 0.625rem;
+	border-radius: var(--nova-radius-pill);
+	background: var(--accent-strong);
+	color: var(--accent-text);
+	font-size: 0.8156rem;
+	font-weight: 600;
+}
+
+/* Context menu */
+
+.menu
+{
+	position: fixed;
+	z-index: 100;
+	min-width: 200px;
+	max-width: 360px;
+	padding: 0.25rem;
+	border: 1px solid var(--menu-border);
+	border-radius: var(--nova-radius-large);
+	background: var(--menu-bg);
+	color: var(--text);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	font: 0.875rem var(--nova-font);
+	outline: none;
+}
+
+.menu-item
+{
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	height: 32px;
+	padding: 0 0.75rem;
+	border: 0;
+	border-radius: var(--nova-radius-medium);
+	background: none;
+	text-align: start;
+	white-space: nowrap;
+	cursor: default;
+}
+
+.menu-item:not([disabled]):hover,
+.menu-item.open,
+.menu-item:focus-visible
+{
+	background: var(--menu-hover);
+	outline: none;
+}
+
+.menu-item[disabled]
+{
+	opacity: 0.45;
+}
+
+.menu-label
+{
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.menu-arrow
+{
+	display: inline-flex;
+	margin-inline-end: -0.25rem;
+}
+
+.menu-separator
+{
+	height: 1px;
+	margin: 0.25rem 0.5rem;
+	background: var(--menu-border);
+}
+
+.swatch
+{
+	flex: none;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--group-color);
+}
+
+/* Dialogs */
+
+dialog
+{
+	width: min(380px, calc(100vw - 32px));
+	padding: 1.25rem;
+	border: 1px solid var(--menu-border);
+	border-radius: var(--nova-radius-large);
+	background: var(--menu-bg);
+	color: var(--text);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+dialog::backdrop
+{
+	background: rgba(0, 0, 0, 0.4);
+}
+
+dialog h3
+{
+	margin: 0 0 1rem;
+	font-size: 1.0312rem;
+	font-weight: 600;
+}
+
+dialog p
+{
+	margin: 0 0 1rem;
+}
+
+.field
+{
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 1rem;
+}
+
+.field input
+{
+	height: 32px;
+	padding: 0 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: var(--nova-radius-medium);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+}
+
+.color-picker
+{
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 1.25rem;
+	padding: 0;
+	border: 0;
+}
+
+.color-picker legend
+{
+	margin-bottom: 0.375rem;
+	padding: 0;
+}
+
+.color-option input
+{
+	appearance: none;
+	display: block;
+	width: 24px;
+	height: 24px;
+	margin: 0;
+	border-radius: 50%;
+	background: var(--group-color);
+}
+
+.color-option input:checked
+{
+	box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--text);
+}
+
+.dialog-buttons
+{
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.dialog-buttons button
+{
+	min-width: 80px;
+	height: 32px;
+	padding: 0 1rem;
+	border: 0;
+	border-radius: var(--nova-radius-pill);
+	background: var(--button-bg);
+	font-weight: 600;
+}
+
+.dialog-buttons button:hover
+{
+	filter: brightness(1.1);
+}
+
+.dialog-buttons .primary
+{
+	background: var(--accent-strong);
+	color: var(--accent-text);
+}
+
+/* Busy overlay: blocks input while a long action runs. Hidden behind open dialogs. */
+
+.busy-overlay
+{
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.35);
+	cursor: progress;
+	animation: fade-in 150ms ease-out;
+}
+
+@keyframes fade-in
+{
+	from
+	{
+		opacity: 0;
+	}
+}
+
+body:has(dialog[open]) .busy-overlay
+{
+	display: none;
+}
+
+.busy-overlay
+{
+	flex-direction: column;
+	gap: 16px;
+}
+
+.busy-text
+{
+	color: #fbfbfe;
+	font-variant-numeric: tabular-nums;
+}
+
+.busy-text:empty
+{
+	display: none;
+}
+
+.spinner
+{
+	width: 40px;
+	height: 40px;
+	border: 4px solid rgba(251, 251, 254, 0.3);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin
+{
+	to
+	{
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.spinner
+	{
+		animation-duration: 2.4s;
+	}
+}
+
+/* Backup dialog */
+
+#backup-dialog
+{
+	width: min(480px, calc(100vw - 32px));
+}
+
+.dialog-hint
+{
+	color: var(--text-muted);
+	font-size: 0.8719rem;
+}
+
+.check-list
+{
+	max-height: 40vh;
+	overflow-y: auto;
+	margin-bottom: 0.5rem;
+}
+
+.check-row
+{
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 28px;
+}
+
+.check-row input
+{
+	accent-color: var(--accent);
+	margin: 0;
+}
+
+#backup-stored-row
+{
+	margin-bottom: 1rem;
+	padding-top: 0.5rem;
+	border-top: 1px solid var(--menu-border);
+}
+
+/* Read by screen readers, not shown. */
+.visually-hidden
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Toast */
+
+.toast
+{
+	position: fixed;
+	inset-inline: 0;
+	bottom: 24px;
+	width: fit-content;
+	max-width: calc(100vw - 32px);
+	margin: 0 auto;
+	padding: 0.5rem 1rem;
+	border-radius: var(--nova-radius-pill);
+	background: var(--text);
+	color: var(--bg);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.toast.error
+{
+	background: #e22850;
+	color: #fff;
+}

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TabCentral Settings</title>
+	<link rel="icon" href="icons/icon-page.svg">
+	<link rel="stylesheet" href="nova.css">
+	<link rel="stylesheet" href="options.css">
+</head>
+
+<body>
+	<nav class="sidebar" aria-label="Sections">
+		<h1 class="brand"><img src="icons/icon-page.svg" alt="" width="24" height="24"> TabCentral</h1>
+		<a class="nav-item" href="#settings" data-section="settings" data-icon="settings"><span>Settings</span></a>
+		<a class="nav-item" href="#shortcuts" data-section="shortcuts" data-icon="shortcuts"><span>Shortcuts</span></a>
+		<a class="nav-item" href="#about" data-section="about" data-icon="about"><span>About</span></a>
+	</nav>
+
+	<main>
+		<section id="settings" class="section">
+			<h2 class="section-title">Settings</h2>
+
+			<div class="nova-card">
+				<h2>Opening TabCentral</h2>
+				<div class="setting">
+					<label for="default-sort">Sort tabs by<span class="setting-hint">When TabCentral
+							opens</span></label>
+					<select id="default-sort" class="nova-select">
+						<option value="last">Last used choice</option>
+						<option value="order">Tab order</option>
+						<option value="recent">Recent activity</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="nova-card">
+				<h2>Closing</h2>
+				<div class="setting">
+					<label for="close-window-confirm">Ask before closing a window<span class="setting-hint">From the
+							window menu; Undo works either way</span></label>
+					<select id="close-window-confirm" class="nova-select">
+						<option value="0">Always</option>
+						<option value="10">With more than 10 tabs</option>
+						<option value="25">With more than 25 tabs</option>
+						<option value="50">With more than 50 tabs</option>
+						<option value="100">With more than 100 tabs</option>
+						<option value="never">Never</option>
+					</select>
+				</div>
+				<div class="setting">
+					<label for="undo-tip">Show the Undo tip for<span class="setting-hint">After closing tabs or a
+							window; Ctrl+Z keeps working afterwards</span></label>
+					<select id="undo-tip" class="nova-select">
+						<option value="3">3 seconds</option>
+						<option value="5">5 seconds</option>
+						<option value="8">8 seconds</option>
+						<option value="12">12 seconds</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="nova-card">
+				<h2>Stored tabs</h2>
+				<p class="card-text">"Store Tabs as" saves tabs as bookmarks, in this folder under Other Bookmarks.
+					Renaming it keeps everything stored in it; you can also move the folder in Firefox's bookmarks
+					Library and TabCentral will keep finding it.</p>
+				<div class="setting">
+					<label for="stored-folder">Folder name<span id="stored-folder-hint"
+							class="setting-hint"></span></label>
+					<input id="stored-folder" class="nova-input" type="text" maxlength="100" autocomplete="off"
+						spellcheck="false">
+				</div>
+			</div>
+		</section>
+
+		<section id="shortcuts" class="section" hidden>
+			<h2 class="section-title">Shortcuts</h2>
+
+			<div class="nova-card">
+				<p class="card-text">Click a shortcut and press the keys you want: Ctrl or Alt together with a letter,
+					number or function key, optionally with Shift. If a shortcut is already used by Firefox or another
+					add-on, the other one may win.</p>
+				<div id="shortcut-list"></div>
+				<div class="buttons">
+					<button id="shortcuts-reset" class="nova-button" type="button">Restore defaults</button>
+				</div>
+			</div>
+
+			<div class="nova-card">
+				<h2>On the TabCentral page</h2>
+				<dl class="key-list">
+					<dt>Ctrl+F, Ctrl+K, Ctrl+P, /</dt>
+					<dd>Search</dd>
+					<dt>Esc</dt>
+					<dd>Clear search (keeps the selected tabs in view), close menu, clear selection</dd>
+					<dt>↓ in the search box</dt>
+					<dd>Go to the first tab</dd>
+					<dt>↑ ↓</dt>
+					<dd>Previous / next tab</dd>
+					<dt>← →</dt>
+					<dd>Same position in the previous / next window</dd>
+					<dt>Home, End</dt>
+					<dd>First / last tab</dd>
+					<dt>Shift+↑ ↓</dt>
+					<dd>Extend the selection</dd>
+					<dt>Alt+↑ ↓</dt>
+					<dd>Move the tab (or the selected tabs) up / down</dd>
+					<dt>Enter, Space on a group</dt>
+					<dd>Collapse or expand the group</dd>
+					<dt>Tab</dt>
+					<dd>Jump between the search box, the tab list and the window buttons</dd>
+					<dt>Space</dt>
+					<dd>Select or unselect the focused tab</dd>
+					<dt>Ctrl+A</dt>
+					<dd>Select all listed tabs</dd>
+					<dt>Enter, double-click</dt>
+					<dd>Open the tab</dd>
+					<dt>Ctrl+Enter, Ctrl+double-click</dt>
+					<dd>Open the tab in this window</dd>
+					<dt>Delete, middle-click</dt>
+					<dd>Close the tab (or the selected tabs)</dd>
+					<dt>Menu key, Shift+F10</dt>
+					<dd>Tab menu; arrows, Enter and Esc work inside menus</dd>
+					<dt>Ctrl+Z, Ctrl+Y</dt>
+					<dd>Undo, redo</dd>
+				</dl>
+			</div>
+		</section>
+
+		<section id="about" class="section" hidden>
+			<h2 class="section-title">About</h2>
+
+			<div class="nova-card about">
+				<h2 class="about-title"><img src="icons/icon-page.svg" alt="" width="32" height="32"> TabCentral <span
+						id="version" class="about-version"></span></h2>
+				<p>"Great, another tAb mAnaGEr," I hear you sigh. Well, yes. Sorry about that. Just like every other tab
+					manager out there, I made it because there wasn't one that I 100% liked. What I did like is the build-in
+					Firefox View > Open Tabs page. Nice and clean. It's just that I wanted a few more features. Not just
+					search, but sorting, moving, stashing, draggin' 'n droppin'. All that good stuff.</p>
+				<p>And while I am a web dev by trade, I have little experience with building browser extensions. So I
+					asked Clause to build it for me. And Jeebs on a bycycle, if it didn't crank it
+					out in under an hour.</p>
+				<p>So I figured I'd share it. I have been dog fooding it for a bit now. So far it seems to be working fine, though I have only been
+					able to test it on Windows 11 and Ubuntu 26.04.
+					I'm sure there are many bugs that haven't reared there head yet. So if you find any, please post
+					them to the issue tracker. Be specific and include screenshots if you can. Also, be patient and
+					kind. I don't get paid to do this, I just do this for the love of the game.
+				<p class="card-text">TabCentral was made with the assistance of AI.</p>
+				<p><a id="github" class="nova-link" href="https://github.com/appel/tabcentral" target="_blank"
+						rel="noopener noreferrer">Source code on GitHub</a></p>
+			</div>
+
+			<div class="nova-card">
+				<h2>Acknowledgements</h2>
+				<p class="card-text">Icons from <a class="nova-link" href="https://icons.getbootstrap.com"
+						target="_blank" rel="noopener noreferrer">Bootstrap Icons</a>, © The Bootstrap Authors, released
+					under the MIT License.</p>
+				<p class="card-text">Domain grouping uses the <a class="nova-link" href="https://publicsuffix.org"
+						target="_blank" rel="noopener noreferrer">Public Suffix List</a>, © Mozilla Foundation and
+					contributors, released under the <a class="nova-link" href="https://mozilla.org/MPL/2.0/"
+						target="_blank" rel="noopener noreferrer">Mozilla Public License 2.0</a>.</p>
+			</div>
+		</section>
+	</main>
+
+	<div id="toast" class="toast" role="status" hidden></div>
+
+	<script src="options.js"></script>
+	<script src="shortcuts.js"></script>
+</body>
+
+</html>
