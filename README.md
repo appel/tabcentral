@@ -32,8 +32,11 @@ TabCentral collects no data. Everything stays in your browser.
 
 Not on addons.mozilla.org yet, but aiming to! Until then:
 
-1. Download the `.xpi` file from the newest [release](https://github.com/appel/tabcentral/releases). These are pre-releases, signed by Mozilla.
-2. Open it in Firefox: drag it onto a Firefox window, or go to `about:addons`, click the gear icon and choose **Install Add-on From File**.
+1. Open the newest [release](https://github.com/appel/tabcentral/releases) in Firefox. These are pre-releases, signed by Mozilla.
+2. Click the `.xpi` file under **Assets**.
+3. Firefox asks whether to allow github.com to install an add-on: choose **Continue to Installation**, then **Add**.
+
+Or download the `.xpi` and drag it onto a Firefox window, or go to `about:addons`, click the gear icon and choose **Install Add-on From File**.
 
 To get a newer version, install the newer `.xpi` the same way. Your settings stay. Requires Firefox 139 or later.
 
