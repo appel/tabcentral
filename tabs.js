@@ -84,7 +84,6 @@ const state = {
 	expandAll: false,
 	storedOpen: false,      // the Stored tabs section; collapsed by default
 	storedClosedInSearch: false, // the section was collapsed during the current search
-	collapsedGroups: new Set(),
 	favicons: {},           // host => favicon URL, remembered for stored tabs
 	drag: null,
 	dropEl: null,
@@ -163,6 +162,38 @@ function el(tag, attrs = {}, ...children)
 function groupIdOf(tab)
 {
 	return HAS_GROUPS && typeof tab.groupId === 'number' ? tab.groupId : NO_GROUP;
+}
+
+// 0.9.1 (2026-11-15): a group is collapsed in the list exactly when it is collapsed in the tab bar.
+function isGroupCollapsed(groupId)
+{
+	return !!state.groupsById.get(groupId)?.collapsed;
+}
+
+// Shown at once; the tab bar follows through the action queue.
+function toggleGroupCollapsed(groupId)
+{
+	const group = state.groupsById.get(groupId);
+	if (!group)
+	{
+		return;
+	}
+	const collapsed = !group.collapsed;
+	group.collapsed = collapsed;
+	render();
+	run(() => browser.tabGroups.update(groupId, { collapsed }), null, { quiet: true });
+}
+
+// Expands the group of a tab that must be shown, e.g. when leaving a search with it selected.
+function expandGroupFor(tab)
+{
+	const group = state.groupsById.get(groupIdOf(tab));
+	if (group?.collapsed)
+	{
+		group.collapsed = false;
+		// Not queued: the caller renders right away, which a running action would hold back.
+		browser.tabGroups.update(group.id, { collapsed: false }).catch(showError);
+	}
 }
 
 function groupColor(color)
@@ -424,11 +455,14 @@ async function refresh()
 {
 	clearTimeout(refreshTimer);
 	refreshTimer = null;
-	if (document.hidden)
+	// While an action runs nothing is rendered, and a long one (sorting hundreds of tabs) fires an event per
+	// tab: reloading everything for each burst only slows it down. The last action ends with a refresh.
+	if (document.hidden || state.busy)
 	{
 		state.stale = true;
 		return;
 	}
+	state.stale = false;
 	try
 	{
 		if (await load() && (state.renderPending || dataSignature() !== state.renderedSignature))
@@ -635,8 +669,8 @@ function applyStoredOpen(open)
 /**
  * Collapsed windows and their "Show more" state are saved as session data on
  * the window (like its name), so they survive reloads and Firefox restarts.
- * Collapsed groups and stored sets are saved by id in local storage. Group ids
- * may not survive a Firefox restart, in which case groups start expanded.
+ * Collapsed stored sets are saved by id in local storage. Tab groups follow
+ * their collapsed state in the tab bar (0.9.1), which Firefox saves itself.
  */
 const savedWindowViews = new Map();
 let savedLocalView = '';
@@ -679,7 +713,6 @@ function saveViewState()
 		}
 	}
 	const local = JSON.stringify({
-		groups: [...state.collapsedGroups].filter(id => state.groupsById.has(id)),
 		stored: [...state.collapsedWindows].filter(id => typeof id === 'string' && state.stored.some(set => set.id === id)),
 		storedToggled: [...state.expandedWindows].filter(id => typeof id === 'string' && state.stored.some(set => set.id === id)),
 	});
@@ -696,7 +729,6 @@ function loadLocalViewState()
 	{
 		const view = JSON.parse(readPref(VIEW_STATE_KEY, '{}')) || {};
 		const list = (value, type) => Array.isArray(value) ? value.filter(item => typeof item === type) : [];
-		list(view.groups, 'number').forEach(id => state.collapsedGroups.add(id));
 		list(view.stored, 'string').forEach(id => state.collapsedWindows.add(id));
 		list(view.storedToggled, 'string').forEach(id => state.expandedWindows.add(id));
 	}
@@ -752,7 +784,7 @@ function dataSignature()
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const MOVE_ANIMATION = { id: 'layout-move', duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' };
 const FADE_ANIMATION = { id: 'layout-fade', duration: 150, easing: 'ease-out' };
-const COLLAPSE_ANIMATION = { id: 'layout-collapse', duration: 160, easing: 'ease-in', fill: 'forwards' };
+const COLLAPSE_ANIMATION = { id: 'layout-collapse', duration: 100, easing: 'ease-in', fill: 'forwards' };
 const LAYOUT_ANIMATION_IDS = new Set([MOVE_ANIMATION.id, FADE_ANIMATION.id, COLLAPSE_ANIMATION.id]);
 const ANIMATED = '.card, [data-tab-id], [data-bookmark-id], .group-header[data-group-id]';
 
@@ -891,7 +923,7 @@ function renderWindow(win, filter)
 		body.append(el('div', { class: 'pinned-strip', role: 'listbox', 'aria-multiselectable': 'true', 'aria-label': `Pinned tabs in ${windowName(win)}` }, ...pinned.map(renderPinned)));
 	}
 
-	const isHiddenInGroup = tab => !filter && orderMode && groupIdOf(tab) !== NO_GROUP && state.collapsedGroups.has(groupIdOf(tab));
+	const isHiddenInGroup = tab => !filter && orderMode && groupIdOf(tab) !== NO_GROUP && isGroupCollapsed(groupIdOf(tab));
 	const candidates = rows.filter(tab => !isHiddenInGroup(tab)).length;
 	const limit = filter || isExpanded(win.id) ? Infinity : MAX_ROWS;
 	const list = el('ul', { class: 'tab-list', role: 'listbox', 'aria-multiselectable': 'true', 'aria-label': `Tabs in ${windowName(win)}` }, ...placeholdersAfter('tab', win.id, null));
@@ -964,13 +996,13 @@ function undoTipMs()
 
 function closeWindowConfirmLimit()
 {
-	const value = readPref(CLOSE_CONFIRM_KEY, '50');
+	const value = readPref(CLOSE_CONFIRM_KEY, '0');
 	if (value === 'never')
 	{
 		return Infinity;
 	}
 	const limit = Number(value);
-	return Number.isFinite(limit) && limit >= 0 ? limit : 50;
+	return Number.isFinite(limit) && limit >= 0 ? limit : 0;
 }
 let undoTip = null;
 
@@ -1099,7 +1131,8 @@ async function closeWindowWithUndo(windowId)
 		return;
 	}
 	const title = win.name || `Window ${win.number}`;
-	if (win.tabs.length > closeWindowConfirmLimit() && !await confirmDialog(`Close ${title} and its ${win.tabs.length} tabs?`, 'Close Window'))
+	const message = `Closing ${title} with ${plural(win.tabs.length, '1 tab', '# tabs')}. Are you sure?`;
+	if (win.tabs.length > closeWindowConfirmLimit() && !await confirmDialog(message, 'Close Window'))
 	{
 		return;
 	}
@@ -1409,10 +1442,10 @@ function revealTabs(ids)
 			continue;
 		}
 		state.collapsedWindows.delete(win.id);
-		state.collapsedGroups.delete(groupIdOf(tab));
+		expandGroupFor(tab);
 		if (!tab.pinned && !isExpanded(win.id))
 		{
-			const rows = windowRows(win).filter(row => !(state.sort === 'order' && state.collapsedGroups.has(groupIdOf(row))));
+			const rows = windowRows(win).filter(row => !(state.sort === 'order' && isGroupCollapsed(groupIdOf(row))));
 			if (rows.findIndex(row => row.id === tab.id) >= MAX_ROWS)
 			{
 				toggleExpanded(win.id);
@@ -1621,7 +1654,7 @@ function renderGroupHeader(groupId, win)
 {
 	const group = state.groupsById.get(groupId);
 	const count = win.tabs.filter(tab => groupIdOf(tab) === groupId).length;
-	const collapsed = state.collapsedGroups.has(groupId);
+	const collapsed = isGroupCollapsed(groupId);
 	const title = group?.title || '';
 
 	return el('li', {
@@ -1636,7 +1669,7 @@ function renderGroupHeader(groupId, win)
 	},
 		el('button', { class: 'icon-button twisty', type: 'button', title: collapsed ? 'Expand' : 'Collapse', tabindex: '-1', 'aria-hidden': 'true', icon: 'chevron' }),
 		el('span', { class: 'group-label' + (title ? '' : ' unnamed'), text: title || 'Unnamed group' }),
-		el('span', { class: 'group-count', text: plural(count, '1 tab', '# tabs') + (group?.collapsed ? ' · collapsed in tab bar' : '') }),
+		el('span', { class: 'group-count', text: plural(count, '1 tab', '# tabs') }),
 		el('button', { class: 'icon-button more', type: 'button', title: 'Group options', tabindex: '-1', 'aria-hidden': 'true', icon: 'more' }),
 	);
 }
@@ -1992,13 +2025,6 @@ function addressKey(url)
 }
 
 /**
- * Physically reorders the unpinned tabs of a window. Groups stay together:
- * they come first in their current order, each sorted internally, followed
- * by the ungrouped tabs. Groups are dissolved while reordering and recreated
- * with the same title, color and collapsed state, so moves cannot pull tabs
- * into or out of a group by accident.
- */
-/**
  * Title used for sorting: leading notification counters such as "(6) " or
  * "[3] " and leading symbols or emoji are ignored, so "(6) Fireship - YouTube"
  * sorts under F. Digits that belong to the title ("2001: A Space Odyssey")
@@ -2017,15 +2043,30 @@ function tabComparator(by)
 	return (a, b) => collator.compare(key(a), key(b));
 }
 
+/**
+ * Physically reorders the unpinned tabs of a window. Groups come first in
+ * their current order, each sorted internally, followed by the ungrouped tabs.
+ *
+ * 0.9.1 (2026-11-15): groups are no longer dissolved and recreated, which lost
+ * them when the page closed halfway, and each block moves in one call instead
+ * of one call per tab. Firefox inserts a tab that moves left into the group of
+ * the tab it lands in front of. Every tab here only moves left, onto a slot
+ * held by a tab of its own block, so membership is kept; it is checked and
+ * repaired afterwards in case a Firefox version behaves differently.
+ */
 async function sortWindow(windowId, by)
 {
 	const compare = tabComparator(by);
+	const unpinned = async () => (await browser.tabs.query({ windowId, pinned: false })).sort((a, b) => a.index - b.index);
 
-	const tabs = (await browser.tabs.query({ windowId })).sort((a, b) => a.index - b.index);
-	const pinnedCount = tabs.filter(tab => tab.pinned).length;
+	const tabs = await unpinned();
+	if (!tabs.length)
+	{
+		return;
+	}
 	const groups = new Map();
 	const loose = [];
-	for (const tab of tabs.filter(tab => !tab.pinned))
+	for (const tab of tabs)
 	{
 		const groupId = groupIdOf(tab);
 		if (groupId === NO_GROUP)
@@ -2035,41 +2076,56 @@ async function sortWindow(windowId, by)
 		}
 		if (!groups.has(groupId))
 		{
-			groups.set(groupId, { info: state.groupsById.get(groupId) || await browser.tabGroups.get(groupId), tabs: [] });
+			groups.set(groupId, []);
 		}
-		groups.get(groupId).tabs.push(tab);
+		groups.get(groupId).push(tab);
 	}
-	for (const group of groups.values())
-	{
-		group.tabs.sort(compare);
-	}
-	loose.sort(compare);
-	const desired = [...[...groups.values()].flatMap(group => group.tabs), ...loose].map(tab => tab.id);
+	const firstIndex = tabs[0].index;
 
-	const groupedIds = [...groups.values()].flatMap(group => group.tabs.map(tab => tab.id));
-	if (groupedIds.length)
+	// 1. Groups to the front, in their current order. Each moves left into a slot that is not inside another group.
+	let index = firstIndex;
+	for (const [groupId, members] of groups)
 	{
-		await browser.tabs.ungroup(groupedIds);
-	}
-
-	// Working left to right, every tab only moves left, which keeps target indexes unambiguous.
-	const current = (await browser.tabs.query({ windowId, pinned: false })).sort((a, b) => a.index - b.index).map(tab => tab.id);
-	for (let i = 0; i < desired.length; i++)
-	{
-		const at = current.indexOf(desired[i]);
-		if (at === i || at < 0)
+		const current = (await unpinned()).find(tab => tab.groupId === groupId);
+		if (current && current.index !== index)
 		{
-			continue;
+			await browser.tabGroups.move(groupId, { index });
 		}
-		await browser.tabs.move(desired[i], { index: pinnedCount + i });
-		current.splice(at, 1);
-		current.splice(i, 0, desired[i]);
+		index += members.length;
 	}
 
-	for (const { info, tabs: groupTabs } of groups.values())
+	// 2. Each group's tabs, then the ungrouped tabs, sorted within their own block.
+	index = firstIndex;
+	for (const block of [...groups.values(), loose])
 	{
-		const groupId = await browser.tabs.group({ tabIds: groupTabs.map(tab => tab.id), createProperties: { windowId } });
-		await browser.tabGroups.update(groupId, { title: info?.title || '', color: info?.color || 'grey', collapsed: !!info?.collapsed });
+		const sorted = [...block].sort(compare).map(tab => tab.id);
+		const current = (await unpinned()).slice(index - firstIndex, index - firstIndex + sorted.length).map(tab => tab.id);
+		if (sorted.length && sorted.join() !== current.join())
+		{
+			await browser.tabs.move(sorted, { index });
+		}
+		index += sorted.length;
+	}
+
+	// 3. Put back any tab whose group changed after all.
+	const wanted = new Map(tabs.map(tab => [tab.id, groupIdOf(tab)]));
+	const strayed = (await unpinned()).filter(tab => wanted.has(tab.id) && groupIdOf(tab) !== wanted.get(tab.id));
+	if (strayed.length)
+	{
+		console.warn('Sorting changed the group of', strayed.length, 'tabs; repairing');
+		const ungroup = strayed.filter(tab => wanted.get(tab.id) === NO_GROUP).map(tab => tab.id);
+		if (ungroup.length)
+		{
+			await browser.tabs.ungroup(ungroup);
+		}
+		for (const [groupId] of groups)
+		{
+			const ids = strayed.filter(tab => wanted.get(tab.id) === groupId).map(tab => tab.id);
+			if (ids.length)
+			{
+				await browser.tabs.group({ groupId, tabIds: ids });
+			}
+		}
 	}
 }
 
@@ -2507,9 +2563,14 @@ function siteOf(url)
  * Moves all unpinned tabs of a site, from every window, in their current
  * order to the end of a window, or into a new window named after the site.
  */
+function siteTabIds(site)
+{
+	return orderIds([...state.tabsById.values()].filter(tab => !tab.pinned && siteOf(tab.url) === site).map(tab => tab.id));
+}
+
 async function moveSiteTabs(site, windowId)
 {
-	const ids = orderIds([...state.tabsById.values()].filter(tab => !tab.pinned && siteOf(tab.url) === site).map(tab => tab.id));
+	const ids = siteTabIds(site);
 	if (!ids.length)
 	{
 		return;
@@ -2524,6 +2585,33 @@ async function moveSiteTabs(site, windowId)
 	{
 		await setWindowName(win.id, site[0].toUpperCase() + site.slice(1));
 	}
+}
+
+/**
+ * 0.9.1 (2026-11-15): moves all unpinned tabs of a site, from every window, into
+ * a group (groupId), or into a new group named after the site in windowId.
+ * Tabs leave the groups they were in.
+ */
+async function moveSiteTabsToGroup(site, groupId, windowId)
+{
+	const ids = siteTabIds(site);
+	if (!ids.length)
+	{
+		return;
+	}
+	if (groupId != null)
+	{
+		const group = state.groupsById.get(groupId);
+		if (group)
+		{
+			await addToGroup(ids, group);
+		}
+		return;
+	}
+	const foreign = tabsOf(ids).filter(tab => tab.windowId !== windowId).map(tab => tab.id);
+	await moveTabs(foreign, windowId, null);
+	const newId = await browser.tabs.group({ tabIds: ids, createProperties: { windowId } });
+	await browser.tabGroups.update(newId, { title: site, color: nextGroupColor() });
 }
 
 // Moves every group of a window, in order, to its start or end, or into a new window.
@@ -2638,6 +2726,7 @@ async function createGroup(ids)
 
 	const groupId = await browser.tabs.group({ tabIds: tabs.map(tab => tab.id), createProperties: { windowId } });
 	await browser.tabGroups.update(groupId, { title: result.title, color: result.color });
+	return groupId;
 }
 
 async function addToGroup(ids, group)
@@ -2833,6 +2922,50 @@ function windowSubmenu(currentWindowIds, onWindow)
 		.map(win => ({ label: `Move to ${windowName(win)}`, action: () => onWindow(win.id) }));
 }
 
+/**
+ * 0.9.1 (2026-11-15): the last "move to a window or group" from the tab menu,
+ * offered again at the top of the next tab menu: { kind: 'window' | 'group', id }.
+ */
+let lastMove = null;
+
+function moveTabsToWindow(ids, windowId)
+{
+	lastMove = { kind: 'window', id: windowId };
+	return moveTabs(ids, windowId, null);
+}
+
+function moveTabsToGroup(ids, group)
+{
+	lastMove = { kind: 'group', id: group.id };
+	return addToGroup(ids, group);
+}
+
+// The repeat item for these tabs, or null when the target is gone or the tabs are already there.
+function repeatMoveItem(movable)
+{
+	const ids = movable.map(tab => tab.id);
+	const verb = plural(ids.length, 'Move Tab to', 'Move # Tabs to');
+	if (!lastMove || !ids.length)
+	{
+		return null;
+	}
+	if (lastMove.kind === 'group')
+	{
+		const group = state.groupsById.get(lastMove.id);
+		if (!group || movable.every(tab => groupIdOf(tab) === group.id))
+		{
+			return null;
+		}
+		return { label: `${verb} “${group.title || 'Unnamed group'}”`, swatch: group.color, action: () => moveTabsToGroup(ids, group) };
+	}
+	const win = getWindow(lastMove.id);
+	if (!win || movable.every(tab => tab.windowId === win.id))
+	{
+		return null;
+	}
+	return { label: `${verb} ${windowName(win)}`, action: () => moveTabsToWindow(ids, win.id) };
+}
+
 function tabMenuItems(ids)
 {
 	const tabs = tabsOf(ids);
@@ -2842,8 +2975,13 @@ function tabMenuItems(ids)
 	const allPinned = tabs.every(tab => tab.pinned);
 	const allMuted = tabs.every(tab => tab.mutedInfo?.muted);
 
-	const others = windowSubmenu(movable.map(tab => tab.windowId), windowId => moveTabs(movableIds, windowId, null));
+	const others = windowSubmenu(movable.map(tab => tab.windowId), windowId => moveTabsToWindow(movableIds, windowId));
 	const items = [];
+	const repeat = repeatMoveItem(movable);
+	if (repeat)
+	{
+		items.push(repeat, '-');
+	}
 	const here = state.windows.find(win => win.current);
 	if (n === 1)
 	{
@@ -2875,34 +3013,52 @@ function tabMenuItems(ids)
 
 	const sites = new Set(tabs.map(tab => siteOf(tab.url)));
 	const site = sites.size === 1 ? [...sites][0] : '';
+	const groups = HAS_GROUPS ? [...state.groupsById.values()] : [];
 	if (site)
 	{
-		const count = [...state.tabsById.values()].filter(tab => !tab.pinned && siteOf(tab.url) === site).length;
+		const count = siteTabIds(site).length;
+		// 0.9.1 (2026-11-15): groups as targets too; a new group is made in the window of the first tab.
+		const groupTargets = groups.map(group =>
+		{
+			const win = getWindow(group.windowId);
+			return { label: `Move to “${group.title || 'Unnamed group'}”` + (win ? ` (${windowName(win)})` : ''), swatch: group.color, action: () => moveSiteTabsToGroup(site, group.id, group.windowId) };
+		});
 		items.push({
 			label: `Move All ${site} Tabs (${count})`,
 			disabled: !count,
 			submenu: [
 				{ label: 'Move to New Window', action: () => moveSiteTabs(site, null) },
+				...(HAS_GROUPS ? [{ label: `Move to New Group “${site}”`, action: () => moveSiteTabsToGroup(site, null, tabs[0].windowId) }] : []),
 				'-',
 				...state.windows.map(win => ({ label: `Move to ${windowName(win)}`, action: () => moveSiteTabs(site, win.id) })),
+				...(groupTargets.length ? ['-', ...groupTargets] : []),
 			],
 		});
 	}
 
 	if (HAS_GROUPS)
 	{
-		const groups = [...state.groupsById.values()];
 		items.push({
 			label: plural(n, 'Add Tab to Group', 'Add # Tabs to Group'),
 			disabled: !movable.length,
 			submenu: [
-				{ label: 'New Group…', action: () => createGroup(movableIds) },
+				{
+					label: 'New Group…',
+					action: async () =>
+					{
+						const groupId = await createGroup(movableIds);
+						if (groupId != null)
+						{
+							lastMove = { kind: 'group', id: groupId };
+						}
+					},
+				},
 				...(groups.length ? ['-'] : []),
 				...groups.map(group =>
 				{
 					const win = getWindow(group.windowId);
 					const suffix = win && !movable.every(tab => tab.windowId === win.id) ? ` (${windowName(win)})` : '';
-					return { label: (group.title || 'Unnamed group') + suffix, swatch: group.color, action: () => addToGroup(movableIds, group) };
+					return { label: (group.title || 'Unnamed group') + suffix, swatch: group.color, action: () => moveTabsToGroup(movableIds, group) };
 				}),
 			],
 		});
@@ -3004,8 +3160,15 @@ function windowMenuItems(windowId)
 		const submenu = storeSubmenu(unpinned.map(tab => tab.id));
 		items.push('-', { label: 'Store Tabs as', disabled: !submenu.length, submenu });
 	}
-	// The window with TabCentral itself cannot be closed from here: the page would close with it.
+	// 0.9.1 (2026-11-15): the window with TabCentral is left alone, as minimizing it would hide this page.
 	items.push('-', {
+		label: 'Minimize Window',
+		disabled: win.current,
+		history: false,
+		action: () => browser.windows.update(windowId, { state: 'minimized' }),
+	});
+	// The window with TabCentral itself cannot be closed from here: the page would close with it.
+	items.push({
 		label: win.current ? 'Close Window (this is TabCentral’s window)' : 'Close Window',
 		disabled: win.current,
 		immediate: true,
@@ -3021,6 +3184,34 @@ function storedMenuItems(setId)
 		{ label: 'Restore in Current Window', history: false, action: () => restoreStored(setId, 'current') },
 		'-',
 		{ label: 'Delete Stored Tabs…', history: false, action: () => deleteStored(setId) },
+	];
+}
+
+/**
+ * 0.9.1 (2026-11-15): menu of one stored tab. Moving reopens it (unloaded) in
+ * that window and removes it from the stored tabs, like dragging it there.
+ * Not recorded for undo: undo cannot bring back the bookmark.
+ */
+function storedTabMenuItems(bookmarkId)
+{
+	if (!findStoredTab(bookmarkId))
+	{
+		return [];
+	}
+	const toWindow = windowId => restoreStoredAt([bookmarkId], { windowId, anchorId: null, groupId: NO_GROUP });
+	return [
+		{ label: 'Open Tab in Background', hint: 'Keeps it in the stored tabs', history: false, action: () => openStoredTab(bookmarkId) },
+		'-',
+		{
+			label: 'Move Tab',
+			submenu: [
+				{ label: 'Move to New Window', history: false, action: () => restoreStoredAt([bookmarkId], null) },
+				'-',
+				...state.windows.map(win => ({ label: `Move to ${windowName(win)}`, history: false, action: () => toWindow(win.id) })),
+			],
+		},
+		'-',
+		{ label: 'Remove from Stored Tabs', history: false, action: () => removeStoredTab(bookmarkId) },
 	];
 }
 
@@ -3079,10 +3270,6 @@ function groupMenuItems(groupId)
 				const tab = await browser.tabs.create({ windowId: group.windowId, active: false });
 				await browser.tabs.group({ groupId, tabIds: [tab.id] });
 			},
-		},
-		{
-			label: group.collapsed ? 'Expand Group in Tab Bar' : 'Collapse Group in Tab Bar',
-			action: () => browser.tabGroups.update(groupId, { collapsed: !group.collapsed }),
 		},
 		{
 			label: 'Move Group',
@@ -3492,13 +3679,18 @@ function onDrop(e)
 /* Event handling */
 
 /**
- * True while the clicked row, card or placeholder is sliding or fading: the
- * click was probably aimed at whatever was there a moment ago.
+ * True while the clicked row, card or placeholder has only just started
+ * sliding or fading: the click was probably aimed at whatever was there a
+ * moment ago. Later in the animation the element is nearly in place and the
+ * click is aimed at it, e.g. when closing several tabs in a row.
  */
+const CLICK_GRACE_MS = 100;
+
 function isMoving(target)
 {
 	const nodes = [target.closest('[data-tab-id], [data-placeholder], .group-header'), target.closest('.card')];
-	return nodes.some(node => node && node.getAnimations().some(animation => LAYOUT_ANIMATION_IDS.has(animation.id) && animation.playState === 'running'));
+	return nodes.some(node => node && node.getAnimations().some(animation => LAYOUT_ANIMATION_IDS.has(animation.id)
+		&& animation.playState === 'running' && (animation.currentTime ?? 0) < CLICK_GRACE_MS));
 }
 
 function onClick(e)
@@ -3571,8 +3763,7 @@ function onClick(e)
 		}
 		else
 		{
-			state.collapsedGroups.has(groupId) ? state.collapsedGroups.delete(groupId) : state.collapsedGroups.add(groupId);
-			render();
+			toggleGroupCollapsed(groupId);
 		}
 		return;
 	}
@@ -3729,10 +3920,16 @@ function onContextMenu(e)
 	const cardHeader = target.closest('.card-header');
 	const header = target.closest('.group-header[data-group-id]');
 	const tabEl = target.closest('[data-tab-id]');
+	const storedRow = target.closest('[data-bookmark-id]');
 	if (cardHeader)
 	{
 		e.preventDefault();
 		openMenu(cardMenuItems(cardHeader.closest('.card')), ...menuPosition(e, cardHeader));
+	}
+	else if (storedRow)
+	{
+		e.preventDefault();
+		openMenu(storedTabMenuItems(storedRow.dataset.bookmarkId), ...menuPosition(e, storedRow));
 	}
 	else if (header)
 	{
@@ -3827,9 +4024,8 @@ function onKeyDown(e)
 	{
 		e.preventDefault();
 		const groupId = Number(focusedHeader.dataset.groupId);
-		state.collapsedGroups.has(groupId) ? state.collapsedGroups.delete(groupId) : state.collapsedGroups.add(groupId);
-		render();
-		announce(state.collapsedGroups.has(groupId) ? 'Group collapsed' : 'Group expanded');
+		toggleGroupCollapsed(groupId);
+		announce(isGroupCollapsed(groupId) ? 'Group collapsed' : 'Group expanded');
 		return;
 	}
 

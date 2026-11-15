@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "TabCentral",
-	"version": "0.9.0",
+	"version": "0.9.1",
 	"description": "Manage open tabs across windows: search, sort, multi-select, drag between windows, tab groups and stored tabs.",
 	"browser_specific_settings": {
 		"gecko": {

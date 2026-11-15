@@ -215,7 +215,7 @@ async function init()
 	$('#version').textContent = `version ${browser.runtime.getManifest().version}`;
 
 	bindSelect('default-sort', DEFAULT_SORT_KEY, 'last', 'Saved. Applies when TabCentral next opens.');
-	bindSelect('close-window-confirm', CLOSE_CONFIRM_KEY, '50', 'Saved');
+	bindSelect('close-window-confirm', CLOSE_CONFIRM_KEY, '0', 'Saved');
 	bindSelect('undo-tip', UNDO_TIP_KEY, '5', 'Saved');
 
 	const folderInput = $('#stored-folder');
